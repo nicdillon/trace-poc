@@ -1,18 +1,15 @@
-import { withSpan, sleep } from '@/lib/tracing';
+import { component } from '@/lib/tracing';
 
 async function fetchStaticData() {
-  return withSpan('static.component.fetch', async () => {
+  return component.fetch('static.component', async () => {
     // Simulate fetching configuration data
-    const config = await withSpan(
-      'static.load.config',
-      async () => {
-        await sleep(80);
-        return {
-          theme: 'light',
-          version: '1.0.0',
-          features: ['tracing', 'analytics', 'caching'],
-        };
-      },
+    const config = await component.load(
+      'static.config',
+      () => ({
+        theme: 'light',
+        version: '1.0.0',
+        features: ['tracing', 'analytics', 'caching'],
+      }),
       {
         'data.source': 'config',
         'cache.hit': false,
@@ -20,20 +17,18 @@ async function fetchStaticData() {
     );
 
     // Simulate loading static content
-    const content = await withSpan(
-      'static.load.content',
-      async () => {
-        await sleep(60);
-        return {
-          title: 'Static Content Section',
-          description: 'This component is rendered statically at build time with custom tracing spans.',
-          items: [
-            'Traced configuration loading',
-            'Traced content rendering',
-            'Traced data transformation',
-          ],
-        };
-      },
+    const content = await component.load(
+      'static.content',
+      () => ({
+        title: 'Static Content Section',
+        description:
+          'This component is rendered statically at build time with custom tracing spans.',
+        items: [
+          'Traced configuration loading',
+          'Traced content rendering',
+          'Traced data transformation',
+        ],
+      }),
       {
         'content.type': 'static',
         'content.locale': 'en',
@@ -41,17 +36,14 @@ async function fetchStaticData() {
     );
 
     // Simulate data transformation
-    return withSpan(
-      'static.transform.data',
+    return component.process(
       () => ({
         ...content,
         config,
         renderedAt: new Date().toISOString(),
       }),
-      {
-        'transform.type': 'merge',
-        'transform.fields': 2,
-      }
+      'merge',
+      2
     );
   });
 }

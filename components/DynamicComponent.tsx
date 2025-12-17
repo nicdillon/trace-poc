@@ -1,26 +1,23 @@
 import { cookies } from 'next/headers';
-import { withSpan, sleep } from '@/lib/tracing';
+import { component, withSpan } from '@/lib/tracing';
 
 async function fetchDynamicData() {
-  return withSpan('dynamic.component.fetch', async () => {
+  return component.fetch('dynamic.component', async () => {
     // Force dynamic rendering by accessing cookies
     const cookieStore = await cookies();
     const sessionId = cookieStore.get('session')?.value || 'anonymous';
 
     // Simulate fetching user-specific data
-    const userData = await withSpan(
-      'dynamic.load.user.data',
-      async () => {
-        await sleep(120);
-        return {
-          sessionId,
-          userId: Math.floor(Math.random() * 1000),
-          preferences: {
-            notifications: true,
-            theme: 'auto',
-          },
-        };
-      },
+    const userData = await component.load(
+      'dynamic.user.data',
+      () => ({
+        sessionId,
+        userId: Math.floor(Math.random() * 1000),
+        preferences: {
+          notifications: true,
+          theme: 'auto',
+        },
+      }),
       {
         'user.session_id': sessionId,
         'data.source': 'session',
@@ -29,16 +26,13 @@ async function fetchDynamicData() {
     );
 
     // Simulate real-time data fetch
-    const realtimeData = await withSpan(
-      'dynamic.load.realtime',
-      async () => {
-        await sleep(90);
-        return {
-          timestamp: new Date().toISOString(),
-          requests: Math.floor(Math.random() * 100),
-          activeUsers: Math.floor(Math.random() * 50),
-        };
-      },
+    const realtimeData = await component.load(
+      'dynamic.realtime',
+      () => ({
+        timestamp: new Date().toISOString(),
+        requests: Math.floor(Math.random() * 100),
+        activeUsers: Math.floor(Math.random() * 50),
+      }),
       {
         'data.type': 'realtime',
         'data.freshness': 'live',
@@ -48,17 +42,14 @@ async function fetchDynamicData() {
     // Simulate personalization logic
     const personalizedContent = await withSpan(
       'dynamic.personalize.content',
-      async () => {
-        await sleep(70);
-        return {
-          greeting: `Hello, User ${userData.userId}!`,
-          recommendations: [
-            'Enable real-time tracing',
-            'Configure custom spans',
-            'Monitor performance metrics',
-          ],
-        };
-      },
+      () => ({
+        greeting: `Hello, User ${userData.userId}!`,
+        recommendations: [
+          'Enable real-time tracing',
+          'Configure custom spans',
+          'Monitor performance metrics',
+        ],
+      }),
       {
         'personalization.user_id': userData.userId.toString(),
         'personalization.type': 'content',

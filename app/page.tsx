@@ -1,6 +1,6 @@
 import { StaticComponent } from '@/components/StaticComponent';
 import { DynamicComponent } from '@/components/DynamicComponent';
-import { withSpan, sleep } from '@/lib/tracing';
+import { withSpan } from '@/lib/tracing';
 
 async function fetchApiData() {
   return withSpan('page.fetch.api', async () => {
@@ -11,26 +11,21 @@ async function fetchApiData() {
 
     const response = await withSpan(
       'page.http.request',
-      async () => {
-        // In production, this would be a real fetch
-        // For this demo, we'll simulate it
-        await sleep(100);
-        return {
-          ok: true,
-          json: async () => ({
-            users: [
-              { id: 1, name: 'Alice' },
-              { id: 2, name: 'Bob' },
-              { id: 3, name: 'Charlie' },
-            ],
-            metadata: {
-              status: 'success',
-              timestamp: new Date().toISOString(),
-            },
-            processedAt: new Date().toISOString(),
-          }),
-        };
-      },
+      () => ({
+        ok: true,
+        json: async () => ({
+          users: [
+            { id: 1, name: 'Alice' },
+            { id: 2, name: 'Bob' },
+            { id: 3, name: 'Charlie' },
+          ],
+          metadata: {
+            status: 'success',
+            timestamp: new Date().toISOString(),
+          },
+          processedAt: new Date().toISOString(),
+        }),
+      }),
       {
         'http.method': 'GET',
         'http.url': `${baseUrl}/api/data`,
